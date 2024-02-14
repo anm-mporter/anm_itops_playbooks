@@ -22,12 +22,16 @@
     ansible_connection: network_cli
 
   tasks: 
+
+    - set_fact:
+        collector_ip: "{{hostvars['localhost']['collector_ip']}}"
+      vars:
+        ansible_connection: ssh
+
     - name: Determine OS
       ansible.builtin.include_tasks:
         file: get_os.yml
 
-    - set_fact:
-        collector_ip: "{{hostvars['localhost']['collector_ip']}}"
 
     #Query the switch to see if the ACL has been created. If not log it and we'll create it later.
     - name: Access List Block
@@ -39,10 +43,12 @@
               name: ansible.netcommon.pyats
             set_fact: access_list_output
           register: get_access_list
+      when: ansible_network_os == 'cisco.ios.ios' or ansible_network_os == 'cisco.nxos.nxos'
       rescue: 
         - name: ACL Missing from switch
           ansible.builtin.debug:
             msg: "ACL Missing from switch {{ inventory_hostname }}. First run"
+      
 
    #Grab the list of ACEs in the existing ACL
     - set_fact: 
@@ -64,6 +70,7 @@
     
     - ansible.builtin.debug:
         msg: "{{ get_access_list.failed }}"
+      when: get_access_list.failed is true
 
 ##IOS Tasks##
 
@@ -136,4 +143,15 @@
       cisco.nxos.nxos_config:
         save_when: changed
       when: ansible_network_os == 'cisco.nxos.nxos'
- 
+
+### FTD Tasks ###
+    - name: Run FTD Tasks
+      ansible.builtin.include_tasks:
+        file: snmp-setup-ftd.yml
+      vars:
+        snmp_community: "ANMMS-SnMpR0"
+        ansible_httpapi_ftd_token_path: "/api/fdm/latest/fdm/token"
+        ansible_httpapi_validate_certs: False
+        ansible_httpapi_port: 443 
+        ansible_httpapi_use_ssl: True
+        ansible_connection: httpapi
