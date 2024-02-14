@@ -50,7 +50,7 @@
           pollEnabled: true
           trapEnabled: false
           securityConfiguration: {
-            "community": snmp_community,
+            "community": snmp_string,
             "type": "snmpv2csecurityconfiguration"}
           interface: {
             "name": "{{ diag_interface['name'] }}",
