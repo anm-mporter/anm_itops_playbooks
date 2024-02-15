@@ -1,5 +1,6 @@
 ---
-   - block:
+   - name: Log into device to determine Network OS
+     block:
       - name: Get raw show version
         ansible.builtin.raw: show version
         register: show_version
@@ -41,7 +42,11 @@
         vars:
          ansible_connection: ssh
      when: ansible_network_os is not defined
+
      rescue:
-         - name: Login failure
-           ansible.builtin.debug:
-               msg: "Login failure on {{ inventory_hostname }}."
+      - name: Login failure
+        ansible.builtin.debug:
+            msg: "Login failure on {{ inventory_hostname }}."
+
+
+

@@ -1,67 +1,72 @@
-  - name: Get all SNMP Hosts
-    ftd_configuration:
-      operation: getSNMPHostList
-      register_as: snmp
+  - block:
+    - name: Get all SNMP Hosts
+      ftd_configuration:
+        operation: getSNMPHostList
+        register_as: snmp
 
-  - name: Check to see if this object already exists
-    set_fact:
-      snmp_host: "{{ item }}"
-    loop: "{{ snmp }}"
-    when: snmp is defined and item['name'] == "ANM_MS_SNMP_" + collector_ip
+    - name: Check to see if this object already exists
+      set_fact:
+        snmp_host: "{{ item }}"
+      loop: "{{ snmp }}"
+      when: snmp is defined and item['name'] == "ANM_MS_SNMP_" + collector_ip
 
-  - name: Execute 'getInterfaceDataList' operation
-    ftd_configuration:
-      operation: "getInterfaceDataList"
-      register_as: interface_info
-    when: snmp_host is undefined
+    - name: Execute 'getInterfaceDataList' operation
+      ftd_configuration:
+        operation: "getInterfaceDataList"
+        register_as: interface_info
+      when: snmp_host is undefined
 
-  - name: Loop through interfaces to get diagnostic
-    set_fact:
-      diag_interface: "{{ item }}"
-    loop: "{{ interface_info }}"
-    when: snmp_host is undefined and item['name'] == 'diagnostic'
-            
-  - name: Execute 'addNetworkObject' operation
-    ftd_configuration:
-      operation: "addNetworkObject"
-      data:
-          name: "ANM_SNMP_{{ collector_ip }}"
-          description: "ANM SNMP Collector {{ collector_ip }}"
-          subType: "HOST"
-          value: "{{ collector_ip }}"
-          isSystemDefined: false
-          dnsResolution: "IPV4_ONLY"
-          type: "networkobject"
-      register_as: networkObject
-    when: snmp_host is undefined
+    - name: Loop through interfaces to get diagnostic
+      set_fact:
+        diag_interface: "{{ item }}"
+      loop: "{{ interface_info }}"
+      when: snmp_host is undefined and item['name'] == 'diagnostic'
 
-  - name: Execute 'addSNMPHost' operation
-    ftd_configuration:
-      operation: "addSNMPHost"
-      data:
-          name: ANM_MS_SNMP_{{ collector_ip }}
-          description: "ANM SNMP Collector {{ collector_ip }}"
-          managerAddress: {
-            "version": "{{ networkObject['version'] }}",
-              "name": "{{ networkObject['name'] }}",
-              "id": "{{ networkObject['id'] }}",
-              "type": "{{ networkObject['type'] }}"}
-          udpPort: 162
-          pollEnabled: true
-          trapEnabled: false
-          securityConfiguration: {
-            "community": snmp_string,
-            "type": "snmpv2csecurityconfiguration"}
-          interface: {
-            "name": "{{ diag_interface['name'] }}",
-            "id": "{{ diag_interface['id'] }}",
-            "type": "physicalinterface"}
-          type: snmphost
-      register_as: snmpobject
-    when: snmp_host is undefined
+    - name: Execute 'addNetworkObject' operation
+      ftd_configuration:
+        operation: "addNetworkObject"
+        data:
+            name: "ANM_SNMP_{{ collector_ip }}"
+            description: "ANM SNMP Collector {{ collector_ip }}"
+            subType: "HOST"
+            value: "{{ collector_ip }}"
+            isSystemDefined: false
+            dnsResolution: "IPV4_ONLY"
+            type: "networkobject"
+        register_as: networkObject
+      when: snmp_host is undefined
 
-  - name: Execute 'addDeployment' operation
-    ftd_configuration:
-      operation: "addDeployment"
-    when: networkobject is defined or snmpobject is defined
+    - name: Execute 'addSNMPHost' operation
+      ftd_configuration:
+        operation: "addSNMPHost"
+        data:
+            name: ANM_MS_SNMP_{{ collector_ip }}
+            description: "ANM SNMP Collector {{ collector_ip }}"
+            managerAddress: {
+              "version": "{{ networkObject['version'] }}",
+                "name": "{{ networkObject['name'] }}",
+                "id": "{{ networkObject['id'] }}",
+                "type": "{{ networkObject['type'] }}"}
+            udpPort: 162
+            pollEnabled: true
+            trapEnabled: false
+            securityConfiguration: {
+              "community": snmp_string,
+              "type": "snmpv2csecurityconfiguration"}
+            interface: {
+              "name": "{{ diag_interface['name'] }}",
+              "id": "{{ diag_interface['id'] }}",
+              "type": "physicalinterface"}
+            type: snmphost
+        register_as: snmpobject
+      when: snmp_host is undefined
+
+    - name: Execute 'addDeployment' operation
+      ftd_configuration:
+        operation: "addDeployment"
+      when: networkobject is defined or snmpobject is defined
+    rescue:
+      - name: Login failure
+        ansible.builtin.debug:
+            msg: "Login failure on {{ inventory_hostname }}."
 
