@@ -43,7 +43,7 @@
               name: ansible.netcommon.pyats
             set_fact: access_list_output
           register: get_access_list
-      when: ansible_network_os == 'cisco.ios.ios' or ansible_network_os == 'cisco.nxos.nxos'
+          when: ansible_network_os == 'cisco.ios.ios' or ansible_network_os == 'cisco.nxos.nxos'
       rescue: 
         - name: ACL Missing from switch
           ansible.builtin.debug:
