@@ -6,13 +6,11 @@
         vars:
          ansible_connection: ssh
 
-##IOS Tasks
-
+## IOS Tasks
       - set_fact: 
           ios_check: "{{show_version['stdout'] | regex_findall( 'IOS Software' )}}"
         vars:
-         ansible_connection: ssh
-
+         ansible_connection: ssh 
       - set_fact:
          ansible_network_os: cisco.ios.ios
         when: ios_check | length > 0
@@ -24,8 +22,7 @@
       - set_fact: 
           nxos_check: "{{show_version['stdout'] | regex_findall( 'NX-OS' )}}"
         vars:
-         ansible_connection: ssh
-
+         ansible_connection: ssh 
       - set_fact:
          ansible_network_os: cisco.nxos.nxos
         when: nxos_check | length > 0
@@ -37,11 +34,14 @@
       - set_fact: 
           ftd_check: "{{show_version['stdout'] | regex_findall( 'Cisco Firepower Threat Defense' )}}"
         vars:
-         ansible_connection: ssh
-
+         ansible_connection: ssh 
       - set_fact:
          ansible_network_os: ftd
         when: ftd_check | length > 0
         vars:
          ansible_connection: ssh
      when: ansible_network_os is not defined
+     rescue:
+         - name: Login failure
+           ansible.builtin.debug:
+               msg: "Login failure on {{ inventory_hostname }}."
