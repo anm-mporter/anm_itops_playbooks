@@ -30,15 +30,28 @@
         vars:
          ansible_connection: ssh
 
-##FTD Tasks
+##Standalone FTD Tasks
 
       - set_fact: 
           ftd_check: "{{show_version['stdout'] | regex_findall( 'Cisco Firepower Threat Defense' )}}"
         vars:
          ansible_connection: ssh 
+
+      - name: Get raw show managers
+        ansible.builtin.raw: show managers
+        register: show_managers
+        when: ftd_check | length > 0
+        vars:
+         ansible_connection: ssh
+
+      - set_fact: 
+          fmc_check: "{{show_managers['stdout_lines'][0] | regex_findall( 'Managed locally' )}}"
+        vars:
+         ansible_connection: ssh 
+
       - set_fact:
          ansible_network_os: ftd
-        when: ftd_check | length > 0
+        when: fmc_check | length > 0
         vars:
          ansible_connection: ssh
      when: ansible_network_os is not defined
