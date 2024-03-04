@@ -59,6 +59,14 @@
         when: fmc_check | length > 0
         vars:
          ansible_connection: ssh
+
+##Catchall tasks
+      #Return none for error checking in future tasks
+      - set_fact:
+         ansible_network_os: none
+        when: ansible_network_os is undefined
+        vars:
+         ansible_connection: ssh
      when: ansible_network_os is not defined
 
      rescue:

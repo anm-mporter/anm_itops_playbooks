@@ -20,7 +20,7 @@
     ace_name: []
     source_network: []
     ansible_connection: network_cli
-
+    
   tasks: 
 
     - set_fact:
@@ -36,7 +36,6 @@
         - name: Error Handling
           ansible.builtin.debug:
             msg: "Login/Reachability failure of {{ inventory_hostname }}"
-
 
     #Query the switch to see if the ACL has been created. If not log it and we'll create it later.
     - name: Access List Block
