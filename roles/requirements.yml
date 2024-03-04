@@ -11,5 +11,7 @@
   #   version: ">=0.9.3"
   #   source: https://galaxy.ansible.com
 
+  
+collections:
 - name: FTDAnsible
   src: https://github.com/adamordal/FTDAnsible
